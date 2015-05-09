@@ -43,12 +43,15 @@ public:
     FileHandle();                                                    // Default constructor
     ~FileHandle();                                                   // Destructor
 
-    FILE * f;
     RC readPage(PageNum pageNum, void *data);                           // Get a specific page
     RC writePage(PageNum pageNum, const void *data);                    // Write a specific page
     RC appendPage(const void *data);                                    // Append a specific page
     unsigned getNumberOfPages();                                        // Get the number of pages in the file
     RC collectCounterValues(unsigned &readPageCount, unsigned &writePageCount, unsigned &appendPageCount);  // put the current counter values into variables
+    FILE* getFile();            // Get current pagefile that is using
+    void markFile(FILE* file);  // Mark current pagefile that is using
+private:
+    FILE* pFile;
 }; 
 
 #endif

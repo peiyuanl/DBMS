@@ -4,20 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/rbf/pfm.cc \
-../src/rbf/rbfm.cc 
+../src/rm/rm.cc \
+../src/rm/rmtest_create_tables.cc 
 
 OBJS += \
-./src/rbf/pfm.o \
-./src/rbf/rbfm.o 
+./src/rm/rm.o \
+./src/rm/rmtest_create_tables.o 
 
 CC_DEPS += \
-./src/rbf/pfm.d \
-./src/rbf/rbfm.d 
+./src/rm/rm.d \
+./src/rm/rmtest_create_tables.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/rbf/%.o: ../src/rbf/%.cc
+src/rm/%.o: ../src/rm/%.cc
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross G++ Compiler'
 	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
