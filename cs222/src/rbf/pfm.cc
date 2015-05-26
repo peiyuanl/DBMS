@@ -2,8 +2,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string>
-#include <cstdio>
-using namespace std;
+#include <cstring>
+#include <stdio.h>
 PagedFileManager* PagedFileManager::_pf_manager = 0;
 
 PagedFileManager* PagedFileManager::instance()
@@ -107,6 +107,10 @@ FileHandle::~FileHandle()
 RC FileHandle::readPage(PageNum pageNum, void *data)
 {   
     if(pFile!=NULL){
+        if(pageNum<0){
+            perror("Could not read page with negative page number!");
+            return -1;
+        }
         if(pageNum+1 > getNumberOfPages()){
             perror("The current page number exceeds the total page number!");
             return -1;
@@ -128,6 +132,10 @@ RC FileHandle::readPage(PageNum pageNum, void *data)
 RC FileHandle::writePage(PageNum pageNum, const void *data)
 {
     if(pFile!=NULL){
+        if(pageNum<0){
+            perror("Could not write page with negative page number!");
+            return -1;
+        }
         if(pageNum+1 > getNumberOfPages()){
             perror("The current page number exceeds the total page number!");
             return -1;

@@ -54,7 +54,6 @@ RelationManager::~RelationManager()
 	_rm = NULL;
 }
 
-//Load the max table ID
 int RelationManager::loadTableID(){
 	int temp, maxID = 0;
 	vector<string> attrNames;
@@ -76,7 +75,6 @@ int RelationManager::loadTableID(){
 	return maxID;
 }
 
-//Calculate the length of an attribute vector
 int RelationManager::calcLength(const vector<Attribute> &descriptor){
 	int size = descriptor.size();
 	int nullBytes = (int)ceil(size/8.0);
@@ -92,7 +90,6 @@ int RelationManager::calcLength(const vector<Attribute> &descriptor){
 	return length;
 }
 
-//Initial a null descriptor
 queue<unsigned char> RelationManager::initialNullDescriptor(const vector<Attribute> &descriptor){
 	queue<unsigned char> res;
 	int size = descriptor.size();
@@ -102,6 +99,7 @@ queue<unsigned char> RelationManager::initialNullDescriptor(const vector<Attribu
 	}
 	return res;
 }
+
 
 
 RC RelationManager::createCatalog()
@@ -114,18 +112,17 @@ RC RelationManager::createCatalog()
 }
 
 
-//Initialize Tables table
+
 RC RelationManager::initialTablesTable()
 {
 	if(rbfm ->createFile("Tables") == -1)
 		return -1;
-	addTablesRow("Tables");
-	addTablesRow("Columns");
+	addTablesColumn("Tables");
+	addTablesColumn("Columns");
 	return 0;
 }
 
-//Add a row to Tables table
-RC RelationManager::addTablesRow(const string &tableName){
+RC RelationManager::addTablesColumn(const string &tableName){
 	FileHandle fileHandle;
 	RID rid;
 	string fileName = tableName;
@@ -170,19 +167,19 @@ RC RelationManager::addTablesRow(const string &tableName){
 	return 0;
 }
 
-//Initialize Columns table
 RC RelationManager::initialColumnsTable(){
 	if(rbfm ->createFile("Columns") == -1)
 		return -1;
-	addColumnsRow("Tables", tablesDescriptor);
-	addColumnsRow("Columns", columnsDescriptor);
+	addColumnsColumn("Tables", tablesDescriptor);
+	addColumnsColumn("Columns", columnsDescriptor);
 
 	return 0;
 
 }
 
-//Add rows to Columns table (rows' names are the attributes' names)
-RC RelationManager::addColumnsRow(const string &tableName, const vector<Attribute> &attrs){
+RC RelationManager::addColumnsColumn(const string &tableName, const vector<Attribute> &attrs){
+	// cout<<"In RelationManager::addColumnsColumn"<<endl;
+	// cout<<"tableName = "<<tableName<<endl;
 	FileHandle fileHandle;
 	RID rid;
 	int tableID;
@@ -195,11 +192,12 @@ RC RelationManager::addColumnsRow(const string &tableName, const vector<Attribut
 	string fileName = tableName;
 	rbfm ->openFile("Columns", fileHandle);
 	int length = calcLength(columnsDescriptor);
+	// cout<<"length = "<<length<<endl;
 	void *buffer = malloc(length);
 	memset(buffer, 0, length);
 	int offset = 0;
 	queue<unsigned char> nullDescriptor = initialNullDescriptor(columnsDescriptor);
-
+	// cout<<"attrs.size() = "<<attrs.size()<<endl;
 	for (int i = 0; i < (int)attrs.size(); i++) {
 		Attribute attr = attrs[i];
 		offset = 0;
@@ -208,6 +206,7 @@ RC RelationManager::addColumnsRow(const string &tableName, const vector<Attribut
 			unsigned char temp = nullDescriptor.front();
 			memcpy((char *)buffer + offset, &temp, 1);
 			offset ++;
+			// cout<<"offset = "<<offset<<endl;
 			nullDescriptor.pop();
 			nullDescriptor.push(temp);
 		}
@@ -225,11 +224,14 @@ RC RelationManager::addColumnsRow(const string &tableName, const vector<Attribut
 		memcpy((char *)buffer + offset, &len, sizeof(int));
 		offset += sizeof(int);
 		int pos = i + 1;
+		// cout<<"before memcpy position!"<<endl;
 		memcpy((char *)buffer + offset, &pos, sizeof(int));
 		offset += sizeof(int);
+		// cout<<"offset = "<<offset<<endl;
 		void *data = malloc(offset);
 		memset(data, 0, offset);
 		memcpy((char *)data, (char *)buffer, offset);
+		// cout<<"column position = "<<*(int*)((char*)data+offset-sizeof(int))<<endl;
 		rbfm ->insertRecord(fileHandle, columnsDescriptor, data, rid);
 
 		free(data);
@@ -263,8 +265,8 @@ RC RelationManager::createTable(const string &tableName, const vector<Attribute>
     string fileName = tableName;
 	if(rbfm ->createFile(fileName) == -1)
 		return -1;
-	addTablesRow(tableName);
-	addColumnsRow(tableName, attrs);
+	addTablesColumn(tableName);
+	addColumnsColumn(tableName, attrs);
 	return 0;
 }
 
@@ -474,6 +476,7 @@ RC RelationManager::scan(const string &tableName,
       const void *value,
       const vector<string> &attributeNames,
       RM_ScanIterator &rm_ScanIterator){
+	// cout<<"In RelationManager::scan------------------"<<endl<<endl;
     FileHandle fileHandle;
     vector<Attribute> attrs;
     // cout<<"tableName = "<<tableName<<endl;
@@ -487,13 +490,13 @@ RC RelationManager::scan(const string &tableName,
     // cout<<"In RelationManager::scan, After OpenFile, Before getAttributes()."<<endl;
     // cout<<endl;
     getAttributes(tableName,attrs);
- //    cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||"<<endl;
- //    cout<<fileHandle.getNumberOfPages()<<endl;
- //    cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||"<<endl;
+    // cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||"<<endl;
+    // cout<<fileHandle.getNumberOfPages()<<endl;
+    // cout<<"||||||||||||||||||||||||||||||||||||||||||||||||||||"<<endl;
 	// cout<<"###################################################"<<endl;
 	// cout<<"Vector attr content : "<<endl;
 	// for(int i=0; i<(int)attrs.size(); i++){
-	// 	cout<<"attribute name = "<<attrs[i].name<<endl;
+		// cout<<"attribute name = "<<attrs[i].name<<endl;
 	// }
 	// cout<<"###################################################"<<endl;
 
@@ -523,8 +526,8 @@ RC RM_ScanIterator::scan(FileHandle &fileHandle,
         const CompOp compOp,
         const void *value,
         const vector<string> &attributeNames){
+    // cout<<"In RM_ScanIterator::scan---------------------------"<<endl;
     RecordBasedFileManager* rbfm = RecordBasedFileManager::instance();
-    // cout<<"In RM Scan---------------------------"<<endl;
     rbfm->scan(fileHandle, recordDescriptor, conditionAttribute, compOp, value, attributeNames, rbfm_ScanIterator);
     return 0;
 }
@@ -532,11 +535,11 @@ RC RM_ScanIterator::scan(FileHandle &fileHandle,
 // Extra credit work
 RC RelationManager::addAttribute(const string &tableName, const Attribute &attr)
 {
-	addColumnsRow(tableName, attr);
+	int tableID = getTableID(tableName);
+	addColumnsColumn(tableName, attr, tableID);
     return 0;
 }
 
-//Get the Table ID of the table specified by the tableName
 int RelationManager::getTableID(const string &tableName){
 	int tableNameLength = tableName.size();
 	void *value = malloc(tableNameLength + sizeof(int));
@@ -570,17 +573,16 @@ int RelationManager::getTableID(const string &tableName){
 	return tableID;
 }
 
-//Add one row to the Columns table.
-RC RelationManager::addColumnsRow(const string &tableName, const Attribute &attr){
+RC RelationManager::addColumnsColumn(const string &tableName, const Attribute &attr, const int &tableID){
 	FileHandle fileHandle;
 	RID rid;
+	string fileName = tableName;
 	rbfm ->openFile("Columns", fileHandle);
 	int length = calcLength(columnsDescriptor);
 	void *buffer = malloc(length);
 	memset(buffer, 0, length);
 	int offset = 0;
 	queue<unsigned char> nullDescriptor = initialNullDescriptor(columnsDescriptor);
-	int tableID = getTableID(tableName);
 
 	int size = nullDescriptor.size();
 	for(int j = 0; j < size; j ++){
@@ -664,7 +666,6 @@ RC RelationManager::dropAttribute(const string &tableName, const string &attribu
 	return -1;
 }
 
-//update a tuple(row) in the Columns table
 RC RelationManager::updateColumnsTuple(const void *data, const RID &rid)
 {
     FileHandle fileHandle;

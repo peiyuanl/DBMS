@@ -5,8 +5,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdio.h>
-#include <stdlib.h>
 
 RecordBasedFileManager* RecordBasedFileManager::_rbf_manager = 0;
 
@@ -249,101 +247,178 @@ RC RecordBasedFileManager::insertRecord(FileHandle &fileHandle, const vector<Att
     return 0;
 }
 
-void RecordBasedFileManager::readRecordWithAddedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data){
+// void RecordBasedFileManager::readRecordWithAddedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data){
+//     int oldFieldCount = *(int*)storedRecord;
+//     int newFieldCount = recordDescriptor.size();
+//     // int fieldCountDiff = newFieldCount - oldFieldCount;
+//     int oldNullDescriptorLen = (int)ceil(oldFieldCount/8.0);
+//     int newNullDescriptorLen = (int)ceil(newFieldCount/8.0);
+//     int nullDescriptorLenDiff = newNullDescriptorLen - oldNullDescriptorLen;
+
+//     int headerLength = (2+oldFieldCount)*sizeof(int);
+//     int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
+//     int originalRecordLength = recordEndPos - headerLength;
+
+//     storedRecord += headerLength;
+//     // Start Copy NullDescriptor from storedRecord to data
+//     memcpy((char*)data, storedRecord, oldNullDescriptorLen);
+//     int numOfBitLeftInTheLastByte = 8-(oldFieldCount%8);
+//     // Not very precise method, but works!!! Set all the left bit to be 1 to fill the entire last byte of nulldescriptor
+//     while(numOfBitLeftInTheLastByte > 0 && numOfBitLeftInTheLastByte < 8){
+//         *((char*)data + oldNullDescriptorLen - sizeof(char)) |= (1<<(numOfBitLeftInTheLastByte-1));
+//         numOfBitLeftInTheLastByte--;
+//     }
+
+//     int count = 0;
+//     while(nullDescriptorLenDiff > 0){
+//         memset((char*)data + oldNullDescriptorLen + count, 0xff, sizeof(char));
+//         count++;
+//         nullDescriptorLenDiff--;
+//     }
+
+//     // Copy data without nulldescriptor part
+//     memcpy((char*)data + newNullDescriptorLen, storedRecord + oldNullDescriptorLen, originalRecordLength-oldNullDescriptorLen);
+
+//     return;
+// }
+
+// void RecordBasedFileManager::readRecordWithDeletedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data){
+
+//     int oldFieldCount = *(int*)storedRecord;
+//     int oldNullDescriptorLen = (int)ceil(oldFieldCount/8.0);
+
+//     int headerLength = (2+oldFieldCount)*sizeof(int);
+//     int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
+//     int originalRecordLength = recordEndPos - headerLength;
+
+//     storedRecord += headerLength;
+//     char * nullDescriptor = storedRecord;
+
+//     vector<bool> bitInNullDescriptor;
+//     for(int i=0; i<oldFieldCount; i++){
+//         int pos = i/8;
+//         int j = i%8;
+//         bool curBit = (nullDescriptor[pos] & (1<<(8-1-j)));
+//         bitInNullDescriptor.push_back(curBit);
+//     }
+
+//     // Remove the bit of deleted attribute in the nulldescriptor
+//     for(int i=0; i<(int)recordDescriptor.size(); i++){
+//         if(recordDescriptor[i].length <= 0)
+//             bitInNullDescriptor.erase(bitInNullDescriptor.begin()+i);
+//     }
+
+//     char* newNullDescriptor = (char*) data;
+//     int newFieldCount = bitInNullDescriptor.size();
+//     int newNullDescriptorLen = (int)ceil(newFieldCount/8.0);
+
+//     // Generate new nulldescriptor
+//     for(int i=0; i<newFieldCount; i++){
+//         int pos = i/8;
+//         int j = i%8;
+//         if(bitInNullDescriptor.at(i)){
+//             newNullDescriptor[pos] |= (1<<(8-1-j));
+//         }
+//     }
+
+//     // Copy data without original nulldescriptor part
+//     memcpy((char*)data + newNullDescriptorLen, storedRecord + oldNullDescriptorLen, originalRecordLength - oldNullDescriptorLen);
+//     return;
+// }
+
+
+// void RecordBasedFileManager::removeHeaderFromRecord(char* storedRecord, void* originalRecord){
+//     // cout<<"In removeHeaderFromRecord()"<<endl;
+//     int fieldCount = *(int*)storedRecord;
+//     // cout<<"fieldCount = "<<fieldCount<<endl;
+//     int headerLength = (2+fieldCount)*sizeof(int);
+//     // cout<<"headerLength = "<<headerLength<<endl;
+//     int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
+//     // cout<<"recordEndPos = "<<recordEndPos<<endl;
+//     int originalRecordLength = recordEndPos - headerLength;
+//     // cout<<"originalRecordLength = "<<originalRecordLength<<endl;
+//     storedRecord += headerLength;
+//     // unsigned int shouldBeNullDescriptor = (unsigned int)*storedRecord;
+//     // cout<<"Should be 40 : "<<shouldBeNullDescriptor<<endl;
+//     memcpy((char*)originalRecord, storedRecord, originalRecordLength);
+//     // cout<<"returned record size : "<<originalRecordLength<<endl;
+//     return;
+// }
+
+void RecordBasedFileManager::constructReturnRecord(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data){
     int oldFieldCount = *(int*)storedRecord;
     int newFieldCount = recordDescriptor.size();
-    // int fieldCountDiff = newFieldCount - oldFieldCount;
-    int oldNullDescriptorLen = (int)ceil(oldFieldCount/8.0);
-    int newNullDescriptorLen = (int)ceil(newFieldCount/8.0);
-    int nullDescriptorLenDiff = newNullDescriptorLen - oldNullDescriptorLen;
 
     int headerLength = (2+oldFieldCount)*sizeof(int);
-    int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
-    int originalRecordLength = recordEndPos - headerLength;
 
-    storedRecord += headerLength;
-    // Start Copy NullDescriptor from storedRecord to data
-    memcpy((char*)data, storedRecord, oldNullDescriptorLen);
-    int numOfBitLeftInTheLastByte = 8-(oldFieldCount%8);
-    // Not very precise method, but works!!! Set all the left bit to be 1 to fill the entire last byte of nulldescriptor
-    while(numOfBitLeftInTheLastByte > 0 && numOfBitLeftInTheLastByte < 8){
-        *((char*)data + oldNullDescriptorLen - sizeof(char)) |= (1<<(numOfBitLeftInTheLastByte-1));
-        numOfBitLeftInTheLastByte--;
-    }
+    void* finalNullDescriptor = malloc(100);
+    memset(finalNullDescriptor,0,100);
+    void* finalRecordData = malloc(PAGE_SIZE);
+    memset(finalRecordData,0,PAGE_SIZE);
 
-    int count = 0;
-    while(nullDescriptorLenDiff > 0){
-        memset((char*)data + oldNullDescriptorLen + count, 0xff, sizeof(char));
-        count++;
-        nullDescriptorLenDiff--;
-    }
 
-    // Copy data without nulldescriptor part
-    memcpy((char*)data + newNullDescriptorLen, storedRecord + oldNullDescriptorLen, originalRecordLength-oldNullDescriptorLen);
+    int finalNullDescriptorAttrCount = 0;   // in bit
+    int fieldDataOffset = 0;
+    int oldFieldPointer = 0;    // in bit
 
-    return;
-}
+    while(oldFieldPointer < oldFieldCount){
+        void* tempAttrData = malloc(PAGE_SIZE);
+        memset(tempAttrData,0,PAGE_SIZE);
+        if(recordDescriptor[oldFieldPointer].length > 0){
+            readAttributeHelper(storedRecord, oldFieldPointer, tempAttrData);
 
-void RecordBasedFileManager::readRecordWithDeletedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data){
+            int pos_byte = finalNullDescriptorAttrCount/8; // [0, nullDescriptorLen-1]
+            int pos_bit = finalNullDescriptorAttrCount%8;  // [0,7]
 
-    int oldFieldCount = *(int*)storedRecord;
-    int oldNullDescriptorLen = (int)ceil(oldFieldCount/8.0);
-
-    int headerLength = (2+oldFieldCount)*sizeof(int);
-    int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
-    int originalRecordLength = recordEndPos - headerLength;
-
-    storedRecord += headerLength;
-    char * nullDescriptor = storedRecord;
-
-    vector<bool> bitInNullDescriptor;
-    for(int i=0; i<oldFieldCount; i++){
-        int pos = i/8;
-        int j = i%8;
-        bool curBit = (nullDescriptor[pos] & (1<<(8-1-j)));
-        bitInNullDescriptor.push_back(curBit);
-    }
-
-    // Remove the bit of deleted attribute in the nulldescriptor
-    for(int i=0; i<(int)recordDescriptor.size(); i++){
-        if(recordDescriptor[i].length <= 0)
-            bitInNullDescriptor.erase(bitInNullDescriptor.begin()+i);
-    }
-
-    char* newNullDescriptor = (char*) data;
-    int newFieldCount = bitInNullDescriptor.size();
-    int newNullDescriptorLen = (int)ceil(newFieldCount/8.0);
-
-    // Generate new nulldescriptor
-    for(int i=0; i<newFieldCount; i++){
-        int pos = i/8;
-        int j = i%8;
-        if(bitInNullDescriptor.at(i)){
-            newNullDescriptor[pos] |= (1<<(8-1-j));
+            if((*(char*)tempAttrData ^ 0x80) == 0){
+                *((char*)finalNullDescriptor+pos_byte) |= (1<<(7-pos_bit));     // if null, set corresponding bit to 1
+            }else{
+                *((char*)finalNullDescriptor+pos_byte) &= (1<<(7-pos_bit));
+            }
+            finalNullDescriptorAttrCount++;
+            int len;
+            if((*(char*)tempAttrData ^ 0x80) == 0)
+                len = 0;
+            else{
+                switch(recordDescriptor[oldFieldPointer].type){
+                    case TypeVarChar:
+                        len = sizeof(int) + *(int*) ((char*)tempAttrData + sizeof(char));
+                        break;
+                    case TypeInt:
+                        len = sizeof(int);
+                        break;
+                    case TypeReal:
+                        len = sizeof(int);
+                        break;
+                }
+            }
+            memcpy((char*)finalRecordData+fieldDataOffset, (char*)tempAttrData + sizeof(char), len);
+            fieldDataOffset += len;
         }
+        free(tempAttrData);
+        oldFieldPointer++;
+    }
+    // cout<<"before free tempAttrData"<<endl;
+
+
+    int newFieldPointer = oldFieldPointer;
+    while(newFieldPointer < newFieldCount){
+        if(recordDescriptor[newFieldPointer].length > 0){
+            int pos_byte = finalNullDescriptorAttrCount/8; // [0, nullDescriptorLen-1]
+            int pos_bit = finalNullDescriptorAttrCount%8;  // [0,7]
+            *((char*)finalNullDescriptor+pos_byte) |= (1<<(7-pos_bit));
+            finalNullDescriptorAttrCount++;
+        }
+
+        newFieldPointer++;
     }
 
-    // Copy data without original nulldescriptor part
-    memcpy((char*)data + newNullDescriptorLen, storedRecord + oldNullDescriptorLen, originalRecordLength - oldNullDescriptorLen);
-    return;
-}
+    int finalNullDescriptorLenInByte = (int)ceil(finalNullDescriptorAttrCount/8.0);
 
-
-void RecordBasedFileManager::removeHeaderFromRecord(char* storedRecord, void* originalRecord){
-    // cout<<"In removeHeaderFromRecord()"<<endl;
-    int fieldCount = *(int*)storedRecord;
-    // cout<<"fieldCount = "<<fieldCount<<endl;
-    int headerLength = (2+fieldCount)*sizeof(int);
-    // cout<<"headerLength = "<<headerLength<<endl;
-    int recordEndPos = *(int*)(storedRecord + headerLength - sizeof(int));
-    // cout<<"recordEndPos = "<<recordEndPos<<endl;
-    int originalRecordLength = recordEndPos - headerLength;
-    // cout<<"originalRecordLength = "<<originalRecordLength<<endl;
-    storedRecord += headerLength;
-    // unsigned int shouldBeNullDescriptor = (unsigned int)*storedRecord;
-    // cout<<"Should be 40 : "<<shouldBeNullDescriptor<<endl;
-    memcpy((char*)originalRecord, storedRecord, originalRecordLength);
-    // cout<<"returned record size : "<<originalRecordLength<<endl;
+    memcpy((char*)data, (char*)finalNullDescriptor, finalNullDescriptorLenInByte);
+    memcpy((char*)data+finalNullDescriptorLenInByte, (char*)finalRecordData, fieldDataOffset);
+    free(finalRecordData);
+    free(finalNullDescriptor);
     return;
 }
 
@@ -408,25 +483,27 @@ RC RecordBasedFileManager::readRecord(FileHandle &fileHandle, const vector<Attri
         return -1;
     }
 
-    int oldAttrNum = getOriginalDataAttrNum(recordData);
-    int newAttrNum = recordDescriptor.size();
+    constructReturnRecord(recordData, recordDescriptor, data);
 
-    if(oldAttrNum < newAttrNum){
-        readRecordWithAddedAttr(recordData, recordDescriptor, data);
-    }else{
-        bool flag = false;
+    // int oldAttrNum = getOriginalDataAttrNum(recordData);
+    // int newAttrNum = recordDescriptor.size();
 
-        for(int i=0; i<newAttrNum; i++){
-            if(recordDescriptor[i].length == 0){
-                readRecordWithDeletedAttr(recordData, recordDescriptor, data);
-                flag = true;
-                break;
-            }
-        }
+    // if(oldAttrNum < newAttrNum){
+    //     readRecordWithAddedAttr(recordData, recordDescriptor, data);
+    // }else{
+    //     bool flag = false;
 
-        if(!flag)
-            removeHeaderFromRecord(recordData, data);
-    }
+    //     for(int i=0; i<newAttrNum; i++){
+    //         if(recordDescriptor[i].length == 0){
+    //             readRecordWithDeletedAttr(recordData, recordDescriptor, data);
+    //             flag = true;
+    //             break;
+    //         }
+    //     }
+
+    //     if(!flag)
+    //         removeHeaderFromRecord(recordData, data);
+    // }
 
     // removeHeaderFromRecord(recordData, data);
     free(recordData);
@@ -440,8 +517,8 @@ int RecordBasedFileManager::getOriginalDataAttrNum(char* recordData){
 
 
 RC RecordBasedFileManager::printRecord(const vector<Attribute> &recordDescriptor, const void *data) {
-    //cout<<"\n\n\n\n";
-    //cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"\n\n\n\n";
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
     char *curData = (char*) data;
     int attrSize = recordDescriptor.size();
     int nullDescriptorLen = (int)ceil(attrSize/8.0);
@@ -483,8 +560,8 @@ RC RecordBasedFileManager::printRecord(const vector<Attribute> &recordDescriptor
             }
         }
     }
-    //cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
-    //cout<<"\n\n\n\n";
+    cout<<"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@"<<endl;
+    cout<<"\n\n\n\n";
     return 0;
 }
 
@@ -678,8 +755,9 @@ int RecordBasedFileManager::readAttributeHelper(char* recordData, int attrID, vo
     if(attrID > 0)  // The start position is the end positon of previous attribute
         field_start_pos = *(int*)(recordData + sizeof(int)*(2+attrID-1));
     int field_length = field_end_pos - field_start_pos;
-    if(field_length<=0)
+    if(field_length<=0){
         *(char*)data = 0x80;    // The field does not has data, which means the field is null.
+    }
     else{
         *(char*)data = 0x00;
         memcpy((char*)data+sizeof(char), recordData+field_start_pos, field_length);
@@ -797,7 +875,7 @@ RC RBFM_ScanIterator::getNextRecord(RID &rid, void *data){
     void* recordData = malloc(PAGE_SIZE);
     memset(pageData, 0, PAGE_SIZE);
     memset(recordData, 0, PAGE_SIZE);
-    // int lastPage = fileHandle.getNumberOfPages();
+    int lastPage = fileHandle.getNumberOfPages();
 
     // cout<<"Break point 1:"<<endl;
     // cout<<"nextRID.pageNum = "<<nextRID.pageNum<<endl;
@@ -874,13 +952,17 @@ int RBFM_ScanIterator::concatenateResult(void* attrData, AttrType type, int &off
     // cout<<"pos_byte = "<<pos_byte<<endl;
     int pos_bit = (attrCount-1)%8;  // [0,7]
     // cout<<"pos_bit = "<<pos_bit<<endl;
-    if(*(char*)attrData == 0x80){
+    // printf("first byte of attrData = %#x \n", *(char*)attrData);
+    if((*(char*)attrData ^ 0x80) == 0){
         *((char*)data+pos_byte) |= (1<<(7-pos_bit));     // if null, set corresponding bit to 1
         // cout<<"CHECK NULL!!!!"<<*((char*)data+pos_byte)<<endl;
+    }else{
+        *((char*)data+pos_byte) &= ~(1<<(7-pos_bit));
     }
-    // cout<<"first byte of attrData"<<*(char*)data<<endl;
+    // cout<<"first byte of attrData = "<<*(char*)data<<endl;
+    // printf("first byte of attrData = %#x \n", *(char*)data);
     int len;
-    if(*(char*)attrData == 0x80)
+    if((*(char*)attrData ^ 0x80) == 0)
         len = 0;
     else{
         switch(type){
@@ -947,7 +1029,7 @@ bool RBFM_ScanIterator::checkRecordRequirement(void* pageData, void* recordData)
 bool RBFM_ScanIterator::checkAttribute(void* value, void* attrData){
     // The returned attribute data has an one-byte null descriptor header.
     // cout<<"In RBFM_ScanIterator::checkAttribute---------------------------"<<endl;
-    if(*(char*)attrData == 0x80)    // The attribute data is null.
+    if((*(char*)attrData ^ 0x80) == 0)    // The attribute data is null.
         return false;
     if(compOp == NO_OP)
         return true;

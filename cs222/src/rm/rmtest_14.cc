@@ -9,6 +9,7 @@ RC TEST_RM_14(const string &tableName)
     // Get Catalog Attributes
     vector<Attribute> attrs;
     RC rc = rm->getAttributes(tableName, attrs);
+    cout<<"aaa"<<attrs[0].length<<endl;
     assert(rc == success && "RelationManager::getAttributes() should not fail.");
 
     // There should be at least three attributes: table-id, table-name, file-name
@@ -32,16 +33,24 @@ RC TEST_RM_14(const string &tableName)
       projected_attrs.push_back(attrs[i].name);
     }
 
-    rc = rm->scan(tableName, "", NO_OP, NULL, projected_attrs, rmsi);
+    rc = rm->scan(tableName, "", NO_OP, NULL, projected_attrs, rmsi);/////////////////////////////
     assert(rc == success && "RelationManager::scan() should not fail.");
 
     int count = 0;
     while(rmsi.getNextTuple(rid, returnedData) != RM_EOF)
     {
+    	cout<<attrs[0].name<<endl;
+    	cout<<attrs[0].type<<endl;
+    	cout<<attrs[0].length<<endl;
+    	cout<<attrs[1].name<<endl;
+    	cout<<attrs[1].type<<endl;
+    	cout<<attrs[1].length<<endl;
+
     	// We will manually check the returned tuples to see whether your implementation is correct or not.
         rm->printTuple(attrs, returnedData);
         count++;
     }
+
     rmsi.close();
 
     // There should be at least two rows - one for Tables and one for Columns

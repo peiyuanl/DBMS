@@ -181,7 +181,7 @@ public:
   int getOriginalDataAttrNum(char* recordData);
   void readRecordWithAddedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data);
   void readRecordWithDeletedAttr(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data);
-
+  void constructReturnRecord(char* storedRecord, const vector<Attribute> &recordDescriptor, void* data);
 };
 
 #endif

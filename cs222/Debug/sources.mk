@@ -25,4 +25,5 @@ C_UPPER_DEPS :=
 SUBDIRS := \
 src/rm \
 src/rbf \
+src/ix \
 

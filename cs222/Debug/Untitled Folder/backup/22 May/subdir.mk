@@ -4,20 +4,20 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 CC_SRCS += \
-../src/rm/rm.cc 
+../Untitled\ Folder/backup/22\ May/ix.cc 
 
 OBJS += \
-./src/rm/rm.o 
+./Untitled\ Folder/backup/22\ May/ix.o 
 
 CC_DEPS += \
-./src/rm/rm.d 
+./Untitled\ Folder/backup/22\ May/ix.d 
 
 
 # Each subdirectory must supply rules for building sources it contributes
-src/rm/%.o: ../src/rm/%.cc
+Untitled\ Folder/backup/22\ May/ix.o: ../Untitled\ Folder/backup/22\ May/ix.cc
 	@echo 'Building file: $<'
 	@echo 'Invoking: Cross G++ Compiler'
-	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -o "$@" "$<"
+	g++ -O0 -g3 -Wall -c -fmessage-length=0 -MMD -MP -MF"Untitled Folder/backup/22 May/ix.d" -MT"Untitled\ Folder/backup/22\ May/ix.d" -o "$@" "$<"
 	@echo 'Finished building: $<'
 	@echo ' '
 

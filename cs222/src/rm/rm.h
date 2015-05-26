@@ -52,11 +52,11 @@ public:
 
   RC initialTablesTable();
 
-  RC addTablesRow(const string &tableName);
+  RC addTablesColumn(const string &tableName);
 
   RC initialColumnsTable();
 
-  RC addColumnsRow(const string &tableName, const vector<Attribute> &attrs);
+  RC addColumnsColumn(const string &tableName, const vector<Attribute> &attrs);
 
   RC deleteCatalog();
 
@@ -97,7 +97,7 @@ public:
 
   int getTableID(const string &tableName);
 
-  RC addColumnsRow(const string &tableName, const Attribute &attr);
+  RC addColumnsColumn(const string &tableName, const Attribute &attr, const int &tableID);
 
   RC updateColumnsTuple(const void *data, const RID &rid);
 
